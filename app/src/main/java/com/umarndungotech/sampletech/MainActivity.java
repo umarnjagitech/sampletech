@@ -1,5 +1,6 @@
 package com.umarndungotech.sampletech;
 
+
 import static com.umarndungotech.sampletech.R.*;
 
 import android.content.Intent;
@@ -15,6 +16,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import java.io.BufferedReader;
+import java.io.*;
+import java.io.InputStream;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.net.URL;
+import java.net.HttpURLConnection;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,14 +44,37 @@ public class MainActivity extends AppCompatActivity {
         homeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Log.v("Umarnjagitech", "Welcome from the home button!");
-                counter++;
-                homeText.setText(String.format("Clicked: %d", counter));
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                executor.execute(() -> {
+                    try {
+                        /* // Send a HTTP GET Request by first connecting to the server
+                        URL url = new URL("http://www.android.com/");
+                        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(in));*/
 
-                if(counter==10) {
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://umarndungo.netlify.app/"));
-                    startActivity(browserIntent);
-                }
+                        Socket socket = new Socket("www.android.com", 80);
+                        socket.setSoTimeout(2000);
+                        OutputStream outputStream = socket.getOutputStream();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                        // Send a raw HTTP GET request to the server
+                        String request = "GET / HTTP/1.1\r\nHost: www.android.com\r\nUser-Agent: app\r\nAccept: */*\r\n\r\n";
+                        outputStream.write(request.getBytes());
+                        outputStream.flush();
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            //sb.append(line).append('\n');
+                            String finalLine = line;
+                            runOnUiThread(() -> homeText.append(finalLine));
+                        }
+                        String result = sb.toString();
+                        //runOnUiThread(() -> homeText.setText(result));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
             }
         });
 
